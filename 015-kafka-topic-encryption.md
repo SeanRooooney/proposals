@@ -4,7 +4,9 @@
 
 *Provide a brief summary of the feature you are proposing to add to Strimzi.*
 
-The goal of this proposal is to provide topic-level encryption-at-rest for Kafka. A core library is proposed which is deployed into a proxy. Proxies can flexibly be deployed in a variety of topologies and require no changes to Kafka clients and brokers.
+The goal of this proposal is to provide topic-level encryption-at-rest for Kafka such that distinct encryption keys can be used for different topics. 
+A core library is proposed which is deployed into a proxy. Proxies can flexibly be deployed in a variety of topologies and require no changes to Kafka clients and brokers. All encryption/decryption takes place at the proxy, an unencrypted topic's messages pass through the proxy without being changed and without
+paying any performance penalty.
 
 This proposal is based on a complete, working implementation.
 
@@ -13,7 +15,7 @@ This proposal is based on a complete, working implementation.
 
 *Describe the current capability Strimzi has in this area.*
 
-Strimzi does not have a current capability in this area
+Strimzi does not have a current capability in this area. 
 
 ## Motivation
 
@@ -43,9 +45,9 @@ On the reverse direction, encrypted responses (responses to Fetch requests) are 
 As defined in the encryption policy, each topic can be encrypted by a different key,
 allowing brokers to store a mix of encrypted and unencrypted data, where
 data owners can manage the keys to their topics.
-Keys ideally are stored in a key management system with access policies and logging.
+Keys ideally are stored in a key management system with access policies and logging. 
 
-A core topic-encryption component, termed the _Encryption Module_, is proposed which is then deployed in a proxy. The 
+A core topic-encryption component, termed the _Encryption Module_, is proposed which is then deployed in a proxy. 
 
 ### Encryption Module
 The Encryption Module is the top-level component which encapsulates encryption functionality and is embedded in a proxy.
@@ -70,7 +72,8 @@ For each topic to be encrypted, a policy exists detailing:
 
 
 ### Message Interception
-Message interception is concerned with facilities for inspecting messages, consulting a policy, and accordingly applying encryption so that messages are passed to the broker in encrypted form and returned to Kafka clients as decrypted plaintext. Specifically, Kafka Produce requests and Fetch responses are examined and potentially modified to respectively encrypt and decrypt messages.
+Message interception is concerned with facilities for inspecting messages, consulting a policy, and accordingly applying encryption so that messages are passed to the broker in encrypted form and returned to Kafka clients as decrypted plaintext. Specifically, Kafka *Produce requests* and *Fetch responses* are examined and potentially modified to respectively encrypt and decrypt messages. High quality open source libraries exist already for implementing the intercept function e.g.
+https://github.com/Shopify/sarama.
 
 ### Proxy
 A proxy can be deployed as a free-standing process or as a sidecar in a Kubernetes pod. 
@@ -79,6 +82,11 @@ and reserialize them into a new message. The overhead of a proxy potentially has
 It also means that the proxy version must always be in phase with that of the broker.
 A proxy-based solution however has the advantage that both Kafka client and broker are unaware
 of the proxy and do not require any modification or configuration to support encryption at rest.
+
+Whether the proxy runs under the control of the client or the broker is considered a configuration
+issue, i.e. exactly the same proxy would be used in both cases, but when under the control of the
+client it would be their responsibility to ensure that producers/consumers are passing through a proxy
+with the same configuratiom.
 
 Envoy is one possible framework for creating proxies. Envoy’s connection 
 pipeline is based on network filters which are linked into filter chains, enabling rich capabilities. 
