@@ -34,6 +34,18 @@ This document proposes a technical solution for providing upper-layer encryption
 
 *Provide an introduction to the proposal. Use sub sections to call out considerations, possible delivery mechanisms etc.*
 
+An implementation of topic encryption is proposed whereby the message stream between client and broker is
+intercepted. Incoming data messages (Produce requests) are inspected to determine whether their payload
+should be encrypted according to a policy.  If so, the data portions are encrypted and the modified
+message is forwarded to the broker. As a result, the topic data is stored by the broker in encrypted form.
+On the reverse direction, encrypted responses (responses to Fetch requests) are decrypted prior to being sent to clients.
+
+As defined in the encryption policy, each topic can be encrypted by a different key,
+allowing brokers to store a mix of encrypted and unencrypted data, where
+data owners can manage the keys to their topics.
+Keys ideally are stored in a key management system with access policies and logging.
+
+
 A core topic-encryption component, termed the _Encryption Module_, is proposed which is then deployed in a proxy. The 
 
 ### Enryption Module
