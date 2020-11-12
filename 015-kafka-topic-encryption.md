@@ -21,7 +21,7 @@ Strimzi does not have a current capability in this area.
 
 *Explain the motivation why this should be added, and what value it brings.*
 
-Apache Kakfa does not directly support any form of encryption-at-rest for data stored at a broker.
+Apache Kafka does not directly support any form of encryption-at-rest for data stored at a broker.
 Nevertheless, Kafka is increasingly used as a store of data, not just as a
 means of transferring it from one location to another. In an
 enterprise, this means that Kafka must conform to the same security and
@@ -86,7 +86,7 @@ of the proxy and do not require any modification or configuration to support enc
 Whether the proxy runs under the control of the client or the broker is considered a configuration
 issue, i.e. exactly the same proxy would be used in both cases, but when under the control of the
 client it would be their responsibility to ensure that producers/consumers are passing through a proxy
-with the same configuratiom.
+with the same configuration.
 
 Envoy is one possible framework for creating proxies. Envoy’s connection 
 pipeline is based on network filters which are linked into filter chains, enabling rich capabilities. 
@@ -100,7 +100,7 @@ in a proxy.
 
 ## Affected/not affected projects
 
-Call out the projects in the Strimzi organisation that are/are not affected by this proposal. 
+Call out the projects in the Strimzi organization that are/are not affected by this proposal. 
 
 
 ## Compatibility
