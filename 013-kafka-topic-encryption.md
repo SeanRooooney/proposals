@@ -45,10 +45,9 @@ allowing brokers to store a mix of encrypted and unencrypted data, where
 data owners can manage the keys to their topics.
 Keys ideally are stored in a key management system with access policies and logging.
 
-
 A core topic-encryption component, termed the _Encryption Module_, is proposed which is then deployed in a proxy. The 
 
-### Enryption Module
+### Encryption Module
 The Encryption Module is the top-level component which encapsulates encryption functionality and is embedded in a proxy.
 A central design goal is adaptability through modularity. Encrypter/decrypter(s), the policy metadata service and the key management service (KMS) are expressed as interfaces and pluggable. The Encryption Module instantiates these components during initialization, allowing a configurable combination of KMS, metadata and encryption implementations.
 
@@ -74,16 +73,20 @@ For each topic to be encrypted, a policy exists detailing:
 Message interception is concerned with facilities for inspecting messages, consulting a policy, and accordingly applying encryption so that messages are passed to the broker in encrypted form and returned to Kafka clients as decrypted plaintext. Specifically, Kafka Produce requests and Fetch responses are examined and potentially modified to respectively encrypt and decrypt messages.
 
 ### Proxy
-A proxy can be implemented as a free-standing process or as a sidecar. In both cases, the proxy needs to
-intercept and de-serialize the Kafka messages, encrypt/decrypt the relevant parts, 
-and reserialize them. The overhead of a proxy potentially has an effect on performance.
+A proxy can be deployed as a free-standing process or as a sidecar in a Kubernetes pod. 
+In both cases, the proxy needs to intercept and de-serialize Kafka messages, encrypt/decrypt the relevant records, 
+and reserialize them into a new message. The overhead of a proxy potentially has an effect on performance.
 It also means that the proxy version must always be in phase with that of the broker.
 A proxy-based solution however has the advantage that both Kafka client and broker are unaware
 of the proxy and do not require any modification or configuration to support encryption at rest.
 
-Initially a free-standing proxy will be developed. 
+Envoy is one possible framework for creating proxies. Envoy’s connection 
+pipeline is based on network filters which are linked into filter chains, enabling rich capabilities. 
+Recent support of WebAssembly (WASM) provides  more flexible and dynamic way
+to extend Envoy and embed Kafka topic encryption.
 
-A second proxy option is Envoy. Envoy is a general framework for creating proxies within Kubernetes used for example by Istio. Envoy’s connection is based on network filters that can be linked into filter chains, allowing rich capabilities to be composed from small microservices. This is contrast to monolithic proxy solutions like NGINX. Envoy's fairly recent support of WebAssembly (WASM) is the preferred model for introducing the topic encryption into an Envoy proxy.
+Envoy however is but one viable approach, but certainly not the only means, to embed topic encryption
+in a proxy. 
 
 
 
@@ -98,4 +101,27 @@ Call out any future or backwards compatibility considerations this proposal has 
 
 ## Rejected alternatives
 
-Call out options that were considered while creating this proposal, but then later rejected, along with reasons why.
+*Call out options that were considered while creating this proposal, but then later rejected, along with reasons why.*
+
+Different approaches to implementing Kafka topic encryption have been considered, most notably
+client-side encryption and embedding encryption in the Kafka broker.
+
+### Client-based encryption
+In the client-based model, Kafka producers encrypt messages and consumers decrypt them.
+They must share policy in order to determine which keys should be used
+for which topics as well as and access a common KMS for accessing shared keys.
+
+We have implemented encrypting clients in both Java and python.
+In the case of python for example, we programmed a wrapper around a python Kafka client in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
+
+In the client model, the broker is oblivious to encryption and no broker changes are required. Encryption-at-rest is achieved with any broker, even those not under a client's control.
+
+However, client encryption requires additional configuration at the edge systems
+and coordination between producers and consumers. 
+As there is no standardization in the structure of Kafka client libraries,
+multiple versions of the topic encryption libraries must be developed
+and maintained in multiple languages (e.g., Java, python, C, golang, etc.).
+
+### Broker modification
+
+A broker-based model involves modification to the Apache Kafka source code in order to embed encryption directly in the broker. An advantage of this approach is that encryption at rest becomes native to the broker, corresponding to traditional database level encryption. One drawback however is the need to maintain a fork of the broker source for each supported version. Furthermore, modifications to broker internals have the potential of disrupting carefully engineered optimizations or critical sections. Many organizations will prefer the general advantage of running standard Kafka distributions as opposed to custom brokers.
