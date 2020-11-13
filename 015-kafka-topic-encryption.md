@@ -111,18 +111,19 @@ client-side encryption and embedding encryption in the Kafka broker.
 ### Client-based encryption
 In the client-based model, Kafka producers encrypt messages and consumers decrypt them.
 They must share policy in order to determine which keys should be used
-for which topics as well as and access a common KMS for accessing shared keys.
+for which topics as well as access a common KMS for accessing shared keys.
+The broker is oblivious to encryption and no broker changes are required. 
+Encryption-at-rest is thus achieved with any broker, even those not under a client's control.
 
 We have implemented encrypting clients in both Java and python.
-In the case of python for example, we programmed a wrapper around a python Kafka client in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
-
-In the client model, the broker is oblivious to encryption and no broker changes are required. Encryption-at-rest is achieved with any broker, even those not under a client's control.
+While Kafka provides an interceptor API in its Java client, no such construction exists for the python client.
+As a result, we programmed a wrapper around a python Kafka client (there are more than one python clients) in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
 
 However, client encryption requires additional configuration at the edge systems
 and coordination between producers and consumers. 
 As there is no standardization in the structure of Kafka client libraries,
 multiple versions of the topic encryption libraries must be developed
-and maintained in multiple languages (e.g., Java, python, C, golang, etc.).
+and maintained in various languages (e.g., Java, python, C, golang, etc.).
 
 ### Broker modification
 
