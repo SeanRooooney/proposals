@@ -89,7 +89,7 @@ pipeline is based on network filters which are linked into filter chains, enabli
 Recent support of WebAssembly (WASM) provides  more flexible and dynamic way
 to extend Envoy and embed Kafka topic encryption.
 
-Envoy however is but one viable approach, but certainly not the only means, to embed topic encryption
+Envoy is but one viable approach, certainly not the only means, to embed topic encryption
 in a proxy. 
 
 
@@ -101,7 +101,10 @@ Strimzi Kafka distribution.
 
 ## Compatibility
 
-As this is a new capability, there are no backwards compatibility issues relating to this proposal.
+As this is a new capability, there are initially no backwards compatibility issues relating to this proposal.
+Because the proxy intercepts Kafka connections and modifies messages, this proposal is tied tightly to Kafka versions.
+The proxy must incorporate any ongoing protocol and message format changes in future Kafka versions while supporting 
+earlier Kafka clients.
 
 ## Rejected alternatives
 
