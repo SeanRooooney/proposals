@@ -103,7 +103,7 @@ Strimzi Kafka distribution.
 
 As this is a new capability, there are initially no backwards compatibility issues relating to this proposal.
 Because the proxy intercepts Kafka connections and modifies messages, this proposal is tied tightly to Kafka versions.
-The proxy must incorporate any ongoing protocol and message format changes in future Kafka versions while supporting 
+The proxy will incorporate any ongoing protocol and message format changes in future Kafka versions while supporting 
 earlier Kafka clients.
 
 ## Rejected alternatives
