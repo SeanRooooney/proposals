@@ -2,10 +2,8 @@
 
 # Proxy-Based Kafka Per-Topic Encryption
 
-*Provide a brief summary of the feature you are proposing to add to Strimzi.*
-
 The goal of this proposal is to provide topic-level encryption-at-rest for Kafka such that distinct encryption keys can be used for different topics. 
-A core library is proposed which is deployed into a proxy. Proxies can flexibly be deployed in a variety of topologies and require no changes to Kafka clients and brokers. All encryption/decryption takes place at the proxy, an unencrypted topic's messages pass through the proxy without being changed and without
+A core library is proposed which is deployed into a proxy. Proxies can flexibly be deployed in a variety of topologies and require no changes to Kafka clients and brokers. All encryption/decryption takes place at the proxy. An unencrypted topic's messages pass through the proxy without being changed and without
 paying any performance penalty.
 
 This proposal is based on a complete, working implementation.
@@ -13,13 +11,9 @@ This proposal is based on a complete, working implementation.
 
 ## Current situation
 
-*Describe the current capability Strimzi has in this area.*
-
 Strimzi does not have a current capability in this area. 
 
 ## Motivation
-
-*Explain the motivation why this should be added, and what value it brings.*
 
 Apache Kafka does not directly support any form of encryption-at-rest for data stored at a broker.
 Nevertheless, Kafka is increasingly used as a store of data, not just as a
@@ -34,8 +28,6 @@ This document proposes a technical solution for providing upper-layer encryption
 
 ## Proposal
 
-*Provide an introduction to the proposal. Use sub sections to call out considerations, possible delivery mechanisms etc.*
-
 An implementation of topic encryption is proposed whereby the message stream between client and broker is
 intercepted. Incoming data messages (Produce requests) are inspected to determine whether their payload
 should be encrypted according to a policy.  If so, the data portions are encrypted and the modified
@@ -48,6 +40,10 @@ data owners can manage the keys to their topics.
 Keys ideally are stored in a key management system with access policies and logging. 
 
 A core topic-encryption component, termed the _Encryption Module_, is proposed which is then deployed in a proxy. 
+
+The diagram below depicts the main components of the proposal, illustrating clients sending and receiving plaintext messages while the proxy exchanges ciphertext messages with the broker:
+
+![overview](images/015-kafkaenc-overview.png)
 
 ### Encryption Module
 The Encryption Module is the top-level component which encapsulates encryption functionality and is embedded in a proxy.
@@ -93,23 +89,24 @@ pipeline is based on network filters which are linked into filter chains, enabli
 Recent support of WebAssembly (WASM) provides  more flexible and dynamic way
 to extend Envoy and embed Kafka topic encryption.
 
-Envoy however is but one viable approach, but certainly not the only means, to embed topic encryption
+Envoy is but one viable approach, certainly not the only means, to embed topic encryption
 in a proxy. 
-
 
 
 ## Affected/not affected projects
 
-Call out the projects in the Strimzi organization that are/are not affected by this proposal. 
-
+This proposal does not conflict or overlap with specific Strimzi projects but rather
+provides a complementary, new functionality which ideally will become part of the
+Strimzi Kafka distribution.
 
 ## Compatibility
 
-Call out any future or backwards compatibility considerations this proposal has accounted for.
+As this is a new capability, there are initially no backwards compatibility issues relating to this proposal.
+Because the proxy intercepts Kafka connections and modifies messages, this proposal is tied tightly to Kafka versions.
+The proxy will incorporate any ongoing protocol and message format changes in future Kafka versions while supporting 
+earlier Kafka clients.
 
 ## Rejected alternatives
-
-*Call out options that were considered while creating this proposal, but then later rejected, along with reasons why.*
 
 Different approaches to implementing Kafka topic encryption have been considered, most notably
 client-side encryption and embedding encryption in the Kafka broker.
@@ -117,18 +114,19 @@ client-side encryption and embedding encryption in the Kafka broker.
 ### Client-based encryption
 In the client-based model, Kafka producers encrypt messages and consumers decrypt them.
 They must share policy in order to determine which keys should be used
-for which topics as well as and access a common KMS for accessing shared keys.
+for which topics as well as access a common KMS for accessing shared keys.
+The broker is oblivious to encryption and no broker changes are required. 
+Encryption-at-rest is thus achieved with any broker, even those not under a client's control.
 
 We have implemented encrypting clients in both Java and python.
-In the case of python for example, we programmed a wrapper around a python Kafka client in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
+While Kafka provides an interceptor API in its Java client, no such construction exists for the python client.
+As a result, we programmed a wrapper around a python Kafka client (there are more than one python clients) in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
 
-In the client model, the broker is oblivious to encryption and no broker changes are required. Encryption-at-rest is achieved with any broker, even those not under a client's control.
-
-However, client encryption requires additional configuration at the edge systems
+In summary, client encryption requires additional configuration at the edge systems
 and coordination between producers and consumers. 
 As there is no standardization in the structure of Kafka client libraries,
 multiple versions of the topic encryption libraries must be developed
-and maintained in multiple languages (e.g., Java, python, C, golang, etc.).
+and maintained in various languages (e.g., Java, python, C, golang, etc.).
 
 ### Broker modification
 
