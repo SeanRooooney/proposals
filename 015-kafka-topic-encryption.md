@@ -119,7 +119,7 @@ We have implemented encrypting clients in both Java and python.
 While Kafka provides an interceptor API in its Java client, no such construction exists for the python client.
 As a result, we programmed a wrapper around a python Kafka client (there are more than one python clients) in order to intercept calls, subsequently transforming messages and delegating to the contained client instance. Such custom solutions must be repeated for each language client. 
 
-However, client encryption requires additional configuration at the edge systems
+In summary, client encryption requires additional configuration at the edge systems
 and coordination between producers and consumers. 
 As there is no standardization in the structure of Kafka client libraries,
 multiple versions of the topic encryption libraries must be developed
